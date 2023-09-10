@@ -1,0 +1,14 @@
+name: monitoring
+title: monitoring
+username:
+account: ljkmail
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8865154
+bundleId: 7385080
+url: https://ljkmail.shinyapps.io/monitoring/
+when: 1687679235.77257
+lastSyncTime: 1687679235.77258
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: R/230410_관측망이상치탐지_module_shiny_v1.5.R
