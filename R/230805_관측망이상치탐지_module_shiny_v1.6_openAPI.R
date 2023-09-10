@@ -81,7 +81,7 @@ ngwServer <- function(id) {
             df_obs_list <- read.csv("R/input/230216_염섬관측정현황.csv", fileEncoding = 'euc-kr')
             # 기상(ASOS)관측위치도 불러오기
             df_asos_list <- read.csv(file = "R/input/230217_META_관측지점정보_asos.csv",
-                                    fileEncoding = "euc-kr")
+                                     fileEncoding = "euc-kr")
             
             # 지도추가
             # shp_watershed <- st_read("R/input/수자원단위지도(최종,GRS80)/WKMBBSN.shp")
@@ -318,79 +318,105 @@ ngwServer <- function(id) {
                     
                 }
                 
-                names(df_asos)  <- c("TM", "STN", "WS_AVG", "WR_DAY", "WD_MAX", "WS_MAX",
-                                     "WS_MAX_TM", "WD_INS", "WS_INS", "WS_INS_TM", "TA_AVG",
-                                     "TA_MAX", "TA_MAX_TM", "TA_MIN", "TA_MIN_TM", "TD_AVG",
-                                     "TS_AVG", "TG_MIN", "HM_AVG", "HM_MIN", "HM_MIN_TM",
-                                     "PV_AVG", "EV_S", "EV_L", "FG_DUR", "PA_AVG", "PS_AVG",
-                                     "PS_MAX", "PS_MAX_TM", "PS_MIN", "PS_MIN_TM", "CA_TOT",
-                                     "SS_DAY", "SS_DUR", "SS_CMB", "SI_DAY", "SI_60M_MAX",
-                                     "SI_60M_MAX_TM", "RN_DAY", "RN_D99", "RN_DUR", "RN_60M_MAX",
-                                     "RN_60M_MAX_TM", "RN_10M_MAX", "RN_10M_MAX_TM", "RN_POW_MAX",
-                                     "RN_POW_MAX_TM", "SD_NEW", "SD_NEW_TM", "SD_MAX", "SD_MAX_TM",
-                                     "TE_05", "TE_10", "TE_15", "TE_30", "TE_50")
+                if (nrow(df_asos) >= 1) { # df_asos 값이 없는 경우도 있어서 조건문을 만들어 놓음
+                    names(df_asos)  <- c("TM", "STN", "WS_AVG", "WR_DAY", "WD_MAX", "WS_MAX",
+                                         "WS_MAX_TM", "WD_INS", "WS_INS", "WS_INS_TM", "TA_AVG",
+                                         "TA_MAX", "TA_MAX_TM", "TA_MIN", "TA_MIN_TM", "TD_AVG",
+                                         "TS_AVG", "TG_MIN", "HM_AVG", "HM_MIN", "HM_MIN_TM",
+                                         "PV_AVG", "EV_S", "EV_L", "FG_DUR", "PA_AVG", "PS_AVG",
+                                         "PS_MAX", "PS_MAX_TM", "PS_MIN", "PS_MIN_TM", "CA_TOT",
+                                         "SS_DAY", "SS_DUR", "SS_CMB", "SI_DAY", "SI_60M_MAX",
+                                         "SI_60M_MAX_TM", "RN_DAY", "RN_D99", "RN_DUR", "RN_60M_MAX",
+                                         "RN_60M_MAX_TM", "RN_10M_MAX", "RN_10M_MAX_TM", "RN_POW_MAX",
+                                         "RN_POW_MAX_TM", "SD_NEW", "SD_NEW_TM", "SD_MAX", "SD_MAX_TM",
+                                         "TE_05", "TE_10", "TE_15", "TE_30", "TE_50")
+                }
                 
-                df_asos <- df_asos |>
-                    select(TM, STN, RN_DAY) 
-              
-                for (i in 1:nrow(df_anomal_gennum2())) {
-                    
-                    if (drop_na(as_tibble(df), ELEV) |>
-                        filter(GENNUM == df_anomal_gennum2()$gennum[i]) |> 
-                        left_join(df_asos |> 
-                                  filter(STN == df_anomal_gennum2()$기상_지점[i],
-                                         RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
-                                  mutate(YMD_ASOS = ymd(TM)) |> 
-                                  select(-TM),
-                                  by = c("YMD" = "YMD_ASOS")) |> 
-                        distinct() |> 
-                        rename(RAIN_mm = RN_DAY) |> 
-                        drop_na(RAIN_mm) |> nrow() >= 1) {  # ASOS 값이 없는 경우는 강우자료를 제외하고 그래프를 출력
+                if (nrow(df_asos) >= 1) { # df_asos 값이 없는 경우도 있어서 조건문을 만들어 놓음
+                    df_asos <- df_asos |>
+                        select(TM, STN, RN_DAY) 
+                }
+                
+                if (nrow(df_asos) >= 1) { # df_asos 값이 없는 경우도 있어서 조건문을 만들어 놓음
+                    for (i in 1:nrow(df_anomal_gennum2())) {
                         
-                        assign(paste0("sec_", df_anomal_gennum2()[i, 1]),
-                               ggh4x::help_secondary(data = drop_na(as_tibble(df), ELEV) |>
-                                                         filter(GENNUM == df_anomal_gennum2()$gennum[i]) |> 
-                                                         left_join(df_asos |> 
-                                                                       filter(STN == df_anomal_gennum2()$기상_지점[i],
-                                                                              RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
-                                                                       mutate(YMD_ASOS = ymd(TM)) |> 
-                                                                       select(-TM),
-                                                                   by = c("YMD" = "YMD_ASOS")) |> 
-                                                         distinct() |> 
-                                                         rename(RAIN_mm = RN_DAY) |> 
-                                                         drop_na(RAIN_mm),
-                                                     primary = ELEV, secondary = RAIN_mm)
-                        )
-                        
-                        assign(paste0("graph_", df_anomal_gennum2()[i, 1]), # 이상값을 검색하려는 기간전 만을 대상으로 이상치를 탐색하고 제거함
-                               drop_na(as_tibble(df), ELEV) |>
-                                   filter(GENNUM == df_anomal_gennum2()$gennum[i]) |>
-                                   time_decompose(ELEV, message = TRUE) |>
-                                   anomalize(remainder,  method = "gesd", max_anoms = input$max_anoms) |>
-                                   time_recompose() |>
-                                   left_join(df_asos |>
-                                                 filter(STN == df_anomal_gennum2()$기상_지점[i],
-                                                        RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
-                                                 mutate(YMD_ASOS = ymd(TM)) |>
-                                                 select(-TM),
-                                             by = c("YMD" = "YMD_ASOS")) |>
-                                   distinct() |>
-                                   rename(RAIN_mm = RN_DAY) |>
-                                   mutate(GENNUM = df_anomal_gennum2()$gennum[i]) |> 
-                                   ggplot(aes(x = YMD, color = anomaly)) + theme_minimal() +
-                                   geom_point(aes(y = get(paste0("sec_",GENNUM[1]))$proj(RAIN_mm)),
-                                              color = "seagreen2", shape = 8) +
-                                   geom_ribbon(aes(ymin = recomposed_l1, ymax = recomposed_l2),
-                                               fill = "grey70", alpha = 0.5, color = NA) +
-                                   scale_y_continuous(sec.axis = get(paste0("sec_", df_anomal_gennum2()[i, 1]))) +
-                                   geom_point(aes(y = observed)) +
-                                   scale_color_manual(values = c("steelblue", "orangered"))+
-                                   theme(axis.title.x = element_blank(),
-                                         axis.title.y.right = element_text(color = "seagreen2"),
-                                         legend.position = "bottom") +
-                                   ylab("groundwater level(EL.m)")
-                        )
-                    } else {
+                        if (drop_na(as_tibble(df), ELEV) |>
+                            filter(GENNUM == df_anomal_gennum2()$gennum[i]) |> 
+                            left_join(df_asos |> 
+                                      filter(STN == df_anomal_gennum2()$기상_지점[i],
+                                             RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
+                                      mutate(YMD_ASOS = ymd(TM)) |> 
+                                      select(-TM),
+                                      by = c("YMD" = "YMD_ASOS")) |> 
+                            distinct() |> 
+                            rename(RAIN_mm = RN_DAY) |> 
+                            drop_na(RAIN_mm) |> nrow() >= 1) {  # ASOS 값이 없는 경우는 강우자료를 제외하고 그래프를 출력
+                            
+                            assign(paste0("sec_", df_anomal_gennum2()[i, 1]),
+                                   ggh4x::help_secondary(data = drop_na(as_tibble(df), ELEV) |>
+                                                             filter(GENNUM == df_anomal_gennum2()$gennum[i]) |> 
+                                                             left_join(df_asos |> 
+                                                                           filter(STN == df_anomal_gennum2()$기상_지점[i],
+                                                                                  RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
+                                                                           mutate(YMD_ASOS = ymd(TM)) |> 
+                                                                           select(-TM),
+                                                                       by = c("YMD" = "YMD_ASOS")) |> 
+                                                             distinct() |> 
+                                                             rename(RAIN_mm = RN_DAY) |> 
+                                                             drop_na(RAIN_mm),
+                                                         primary = ELEV, secondary = RAIN_mm)
+                            )
+                            
+                            assign(paste0("graph_", df_anomal_gennum2()[i, 1]), # 이상값을 검색하려는 기간전 만을 대상으로 이상치를 탐색하고 제거함
+                                   drop_na(as_tibble(df), ELEV) |>
+                                       filter(GENNUM == df_anomal_gennum2()$gennum[i]) |>
+                                       time_decompose(ELEV, message = TRUE) |>
+                                       anomalize(remainder,  method = "gesd", max_anoms = input$max_anoms) |>
+                                       time_recompose() |>
+                                       left_join(df_asos |>
+                                                     filter(STN == df_anomal_gennum2()$기상_지점[i],
+                                                            RN_DAY >= 10) |>  # 강우량이 10mm이상의 수치만 출력
+                                                     mutate(YMD_ASOS = ymd(TM)) |>
+                                                     select(-TM),
+                                                 by = c("YMD" = "YMD_ASOS")) |>
+                                       distinct() |>
+                                       rename(RAIN_mm = RN_DAY) |>
+                                       mutate(GENNUM = df_anomal_gennum2()$gennum[i]) |> 
+                                       ggplot(aes(x = YMD, color = anomaly)) + theme_minimal() +
+                                       geom_point(aes(y = get(paste0("sec_",GENNUM[1]))$proj(RAIN_mm)),
+                                                  color = "seagreen2", shape = 8) +
+                                       geom_ribbon(aes(ymin = recomposed_l1, ymax = recomposed_l2),
+                                                   fill = "grey70", alpha = 0.5, color = NA) +
+                                       scale_y_continuous(sec.axis = get(paste0("sec_", df_anomal_gennum2()[i, 1]))) +
+                                       geom_point(aes(y = observed)) +
+                                       scale_color_manual(values = c("steelblue", "orangered"))+
+                                       theme(axis.title.x = element_blank(),
+                                             axis.title.y.right = element_text(color = "seagreen2"),
+                                             legend.position = "bottom") +
+                                       ylab("groundwater level(EL.m)")
+                            )
+                        } else {
+                            assign(paste0("graph_", df_anomal_gennum2()[i, 1]), # 이상값을 검색하려는 기간전 만을 대상으로 이상치를 탐색하고 제거함
+                                   drop_na(as_tibble(df), ELEV) |>
+                                       filter(GENNUM == df_anomal_gennum2()$gennum[i]) |>
+                                       time_decompose(ELEV, message = TRUE) |>
+                                       anomalize(remainder,  method = "gesd", max_anoms = input$max_anoms) |>
+                                       time_recompose() |>
+                                       mutate(GENNUM = df_anomal_gennum2()$gennum[i]) |> 
+                                       ggplot(aes(x = YMD, color = anomaly)) + theme_minimal() +
+                                       geom_ribbon(aes(ymin = recomposed_l1, ymax = recomposed_l2),
+                                                   fill = "grey70", alpha = 0.5, color = NA) +
+                                       geom_point(aes(y = observed)) +
+                                       scale_color_manual(values = c("steelblue", "orangered"))+
+                                       theme(axis.title.x = element_blank(),
+                                             axis.title.y.right = element_text(color = "seagreen2"),
+                                             legend.position = "bottom") +
+                                       ylab("groundwater level(EL.m)")
+                            )
+                        }
+                    }
+                } else { # df_asos 값이 없는 경우 강우 그래프 없이 그림을 그림
+                    for (i in 1:nrow(df_anomal_gennum2())) {
                         assign(paste0("graph_", df_anomal_gennum2()[i, 1]), # 이상값을 검색하려는 기간전 만을 대상으로 이상치를 탐색하고 제거함
                                drop_na(as_tibble(df), ELEV) |>
                                    filter(GENNUM == df_anomal_gennum2()$gennum[i]) |>
