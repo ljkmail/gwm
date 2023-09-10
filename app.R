@@ -1,4 +1,6 @@
 library(shiny)
+library(sysfonts) # AWS환경에서 한글 폰트가 없어 추가
+font_add("NanumGothicBold","/usr/share/fonts/NanumFont/NanumGothicBold.ttf") 
 
 source("R/230410_보관측망이상치검출_전체권역_module_v1.0.R")
 source("R/230805_관측망이상치탐지_module_shiny_v1.6_openAPI.R")
